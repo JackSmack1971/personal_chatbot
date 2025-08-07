@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  personal_chatbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/OWNER/REPO/personal-chatbot:dev
+    container_name: personal_chatbot
+    environment:
+      # Logging and environment
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - APP_ENV=${APP_ENV:-development}
+      # OpenRouter config (model fallback handled by app: OPENROUTER_DEFAULT_MODEL or CHATBOT_DEFAULT_MODEL)
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://api.openrouter.ai}
+      - OPENROUTER_DEFAULT_MODEL=${OPENROUTER_DEFAULT_MODEL:-}
+      - CHATBOT_DEFAULT_MODEL=${CHATBOT_DEFAULT_MODEL:-openrouter/auto}
+      # Secrets (supply via .env file or environment; do not commit real values)
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - API_KEY=${API_KEY:-}
+    volumes:
+      # Bind mount runtime directories for local development
+      - ./personal_chatbot/uploads:/app/personal_chatbot/uploads
+      - ./personal_chatbot/exports:/app/personal_chatbot/exports
+    healthcheck:
+      test: [ "CMD-SHELL", "sh /app/scripts/healthcheck.sh" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    init: true
+    restart: unless-stopped
